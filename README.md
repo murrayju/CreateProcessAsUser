@@ -1,7 +1,8 @@
 CreateProcessAsUser
 ===================
 
-This uses the Win32 apis to
+This uses the Win32 apis to:
+
 1. Find the currently active user session
 2. Spawn a new process in that session
 
