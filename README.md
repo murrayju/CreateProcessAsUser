@@ -11,6 +11,8 @@ This allows a process running in a different session (such as a windows service)
 Note that the process must have the appropriate (admin) privileges for this to work correctly.
 
 ## Usage
-```
+```C#
+using murrayju.ProcessExtensions;
+// ...
 ProcessExtensions.StartProcessAsCurrentUser("calc.exe");
 ```
