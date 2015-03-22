@@ -12,5 +12,5 @@ Note that the process must have the appropriate (admin) privileges for this to w
 
 ## Usage
 ```
-CreateProcessAsUser.LaunchUserProcess(null, "calc", null, true);
+ProcessExtensions.StartProcessAsCurrentUser("calc.exe");
 ```
