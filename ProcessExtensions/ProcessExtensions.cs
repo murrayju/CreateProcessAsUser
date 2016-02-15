@@ -174,7 +174,7 @@ namespace murrayju.ProcessExtensions
             if (WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, ref pSessionInfo, ref sessionCount) != 0)
             {
                 var arrayElementSize = Marshal.SizeOf(typeof(WTS_SESSION_INFO));
-                var current = (int)pSessionInfo;
+                var current = pSessionInfo;
 
                 for (var i = 0; i < sessionCount; i++)
                 {
