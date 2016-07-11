@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 
 namespace murrayju.ProcessExtensions
@@ -65,6 +65,18 @@ namespace murrayju.ProcessExtensions
             int Version,
             ref IntPtr ppSessionInfo,
             ref int pCount);
+
+        [DllImport("wtsapi32.dll", SetLastError = true)]
+        static extern bool WTSQuerySessionInformation(
+            System.IntPtr hServer,
+            uint sessionId,
+            WTS_INFO_CLASS wtsInfoClass,
+            out System.IntPtr ppBuffer,
+            out uint pBytesReturned);
+
+        [DllImport("wtsapi32.dll")]
+        static extern void WTSFreeMemory(IntPtr pMemory);
+
 
         #endregion
 
@@ -159,16 +171,41 @@ namespace murrayju.ProcessExtensions
             public readonly WTS_CONNECTSTATE_CLASS State;
         }
 
+        public enum WTS_INFO_CLASS
+        {
+            WTSInitialProgram,
+            WTSApplicationName,
+            WTSWorkingDirectory,
+            WTSOEMId,
+            WTSSessionId,
+            WTSUserName,
+            WTSWinStationName,
+            WTSDomainName,
+            WTSConnectState,
+            WTSClientBuildNumber,
+            WTSClientName,
+            WTSClientDirectory,
+            WTSClientProductId,
+            WTSClientHardwareId,
+            WTSClientAddress,
+            WTSClientDisplay,
+            WTSClientProtocolType
+        }
+
         #endregion
 
         // Gets the user token from the currently active session
-        private static bool GetSessionUserToken(ref IntPtr phUserToken)
+        private static bool GetSessionUserToken(ref IntPtr phUserToken, string limit_user = null)
         {
             var bResult = false;
             var hImpersonationToken = IntPtr.Zero;
             var activeSessionId = INVALID_SESSION_ID;
             var pSessionInfo = IntPtr.Zero;
             var sessionCount = 0;
+
+            IntPtr userPtr = IntPtr.Zero;
+            IntPtr domainPtr = IntPtr.Zero;
+            uint bytes = 0;
 
             // Get a handle to the user access token for the current active session.
             if (WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, ref pSessionInfo, ref sessionCount) != 0)
@@ -181,10 +218,20 @@ namespace murrayju.ProcessExtensions
                     var si = (WTS_SESSION_INFO)Marshal.PtrToStructure((IntPtr)current, typeof(WTS_SESSION_INFO));
                     current += arrayElementSize;
 
-                    if (si.State == WTS_CONNECTSTATE_CLASS.WTSActive)
+                    WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, si.SessionID, WTS_INFO_CLASS.WTSUserName, out userPtr, out bytes);
+                    WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, si.SessionID, WTS_INFO_CLASS.WTSDomainName, out domainPtr, out bytes);
+
+                    var user = Marshal.PtrToStringAnsi(userPtr);
+                    var domain = Marshal.PtrToStringAnsi(domainPtr);
+
+                    WTSFreeMemory(userPtr); 
+                    WTSFreeMemory(domainPtr);
+
+                    if (si.State == WTS_CONNECTSTATE_CLASS.WTSActive && (user == limit_user || limit_user == null))
                     {
                         activeSessionId = si.SessionID;
                     }
+
                 }
             }
 
@@ -207,7 +254,12 @@ namespace murrayju.ProcessExtensions
             return bResult;
         }
 
-        public static bool StartProcessAsCurrentUser(string appPath, string cmdLine = null, string workDir = null, bool visible = true)
+        public static bool StartProcessAsUser(string user, string appPath, string cmdLine = null, string workDir = null, bool visible = true)
+        {
+            return StartProcessAsCurrentUser(appPath, cmdLine, workDir, visible, user);
+        }
+
+        public static bool StartProcessAsCurrentUser(string appPath, string cmdLine = null, string workDir = null, bool visible = true, string user = null)
         {
             var hUserToken = IntPtr.Zero;
             var startInfo = new STARTUPINFO();
@@ -219,7 +271,7 @@ namespace murrayju.ProcessExtensions
 
             try
             {
-                if (!GetSessionUserToken(ref hUserToken))
+                if (!GetSessionUserToken(ref hUserToken, user))
                 {
                     throw new Exception("StartProcessAsCurrentUser: GetSessionUserToken failed.");
                 }
@@ -245,7 +297,7 @@ namespace murrayju.ProcessExtensions
                     ref startInfo,
                     out procInfo))
                 {
-                    throw new Exception("StartProcessAsCurrentUser: CreateProcessAsUser failed.\n");
+                    throw new Exception("StartProcessAsCurrentUser: CreateProcessAsUser failed due to Error " + Marshal.GetLastWin32Error().ToString() + ".\n");
                 }
 
                 iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
