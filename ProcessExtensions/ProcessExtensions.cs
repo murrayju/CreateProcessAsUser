@@ -245,7 +245,8 @@ namespace murrayju.ProcessExtensions
                     ref startInfo,
                     out procInfo))
                 {
-                    throw new Exception("StartProcessAsCurrentUser: CreateProcessAsUser failed.\n");
+                    iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
+                    throw new Exception("StartProcessAsCurrentUser: CreateProcessAsUser failed.  Error Code -" + iResultOfCreateProcessAsUser);
                 }
 
                 iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
