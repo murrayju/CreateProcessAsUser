@@ -16,3 +16,6 @@ using murrayju.ProcessExtensions;
 // ...
 ProcessExtensions.StartProcessAsCurrentUser("calc.exe");
 ```
+
+### Parameters
+The second argument is used to pass the command line arguments as a string. Depending on the target application, `argv[0]` might be expected to be the executable name, or it might be the first parameter. See [this stack overflow answer](https://stackoverflow.com/a/14001282) for details. When in doubt, try it both ways.
