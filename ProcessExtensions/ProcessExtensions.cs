@@ -3,6 +3,11 @@ using System.Runtime.InteropServices;
 
 namespace murrayju.ProcessExtensions
 {
+    public class ProcessCreationException : Exception
+    {
+        public ProcessCreationException(string msg) : base(msg) { }
+    }
+
     public static class ProcessExtensions
     {
         #region Win32 Constants
@@ -221,7 +226,7 @@ namespace murrayju.ProcessExtensions
             {
                 if (!GetSessionUserToken(ref hUserToken))
                 {
-                    throw new Exception("StartProcessAsCurrentUser: GetSessionUserToken failed.");
+                    throw new ProcessCreationException("StartProcessAsCurrentUser: GetSessionUserToken failed.");
                 }
 
                 uint dwCreationFlags = CREATE_UNICODE_ENVIRONMENT | (uint)(visible ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
@@ -230,7 +235,7 @@ namespace murrayju.ProcessExtensions
 
                 if (!CreateEnvironmentBlock(ref pEnv, hUserToken, false))
                 {
-                    throw new Exception("StartProcessAsCurrentUser: CreateEnvironmentBlock failed.");
+                    throw new ProcessCreationException("StartProcessAsCurrentUser: CreateEnvironmentBlock failed.");
                 }
 
                 if (!CreateProcessAsUser(hUserToken,
@@ -246,7 +251,7 @@ namespace murrayju.ProcessExtensions
                     out procInfo))
                 {
                     iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
-                    throw new Exception("StartProcessAsCurrentUser: CreateProcessAsUser failed.  Error Code -" + iResultOfCreateProcessAsUser);
+                    throw new ProcessCreationException("StartProcessAsCurrentUser: CreateProcessAsUser failed.  Error Code -" + iResultOfCreateProcessAsUser);
                 }
 
                 iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
