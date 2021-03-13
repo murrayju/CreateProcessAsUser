@@ -14,7 +14,8 @@ namespace murrayju.ProcessExtensions
 
         private const uint INVALID_SESSION_ID = 0xFFFFFFFF;
         private static readonly IntPtr WTS_CURRENT_SERVER_HANDLE = IntPtr.Zero;
-
+        private const int STARTF_USESHOWWINDOW = 0x00000001;
+        
         #endregion
 
         #region DllImports
@@ -225,6 +226,7 @@ namespace murrayju.ProcessExtensions
                 }
 
                 uint dwCreationFlags = CREATE_UNICODE_ENVIRONMENT | (uint)(visible ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
+                startInfo.dwFlags = STARTF_USESHOWWINDOW;
                 startInfo.wShowWindow = (short)(visible ? SW.SW_SHOW : SW.SW_HIDE);
                 startInfo.lpDesktop = "winsta0\\default";
 
