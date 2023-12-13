@@ -1,5 +1,15 @@
-CreateProcessAsUser
-===================
+# CreateProcessAsUser
+
+![Maintainers Wanted](https://img.shields.io/badge/maintainers-wanted-brightgreen.svg)
+
+---
+
+### 🚧 Looking for maintainers 🚧
+> :loudspeaker: **We are actively seeking collaborators to help maintain and improve this project!**
+
+This library was created 10+ years ago when I was actively working on Windows services. I have since moved on to other things, and I'm not in a position to easily maintain this project, which is still actively used by the community. If you are interested in helping, please reach out!
+
+---
 
 This uses the Win32 apis to:
 
