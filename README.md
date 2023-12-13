@@ -8,7 +8,7 @@ This uses the Win32 apis to:
 
 This allows a process running in a different session (such as a windows service) to start a process with a graphical user interface that the user must see.
 
-Note that the process must have the appropriate (admin) privileges for this to work correctly.
+Note that the process must have the appropriate (admin) privileges for this to work correctly. For [WTSQueryUserToken](https://github.com/murrayju/CreateProcessAsUser/blob/0381db2e8fb36f48794c073e87f773f7ca1ae039/ProcessExtensions/ProcessExtensions.cs#L197) you will need the __SE_TCB_NAME__ privilege, which is typically only held by Services running under the LocalSystem account ( [SO Link](https://stackoverflow.com/a/1289126/1872399) ).
 
 ## Usage
 ```C#
