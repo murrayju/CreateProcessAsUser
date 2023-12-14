@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace murrayju.ProcessExtensions
@@ -71,6 +72,9 @@ namespace murrayju.ProcessExtensions
             int Version,
             ref IntPtr ppSessionInfo,
             ref int pCount);
+
+        [DllImport("Wtsapi32.dll")]
+        private static extern void WTSFreeMemory(IntPtr ppSessionInfo);
 
         #endregion
 
@@ -192,6 +196,8 @@ namespace murrayju.ProcessExtensions
                         activeSessionId = si.SessionID;
                     }
                 }
+
+                WTSFreeMemory(pSessionInfo);
             }
 
             // If enumerating did not work, fall back to the old method
@@ -238,6 +244,11 @@ namespace murrayju.ProcessExtensions
                 if (!CreateEnvironmentBlock(ref pEnv, hUserToken, false))
                 {
                     throw new ProcessCreationException("StartProcessAsCurrentUser: CreateEnvironmentBlock failed.");
+                }
+
+                if (workDir != null)
+                {
+                    Directory.SetCurrentDirectory(workDir);
                 }
 
                 if (!CreateProcessAsUser(hUserToken,
