@@ -29,3 +29,11 @@ ProcessExtensions.StartProcessAsCurrentUser("calc.exe");
 
 ### Parameters
 The second argument is used to pass the command line arguments as a string. Depending on the target application, `argv[0]` might be expected to be the executable name, or it might be the first parameter. See [this stack overflow answer](https://stackoverflow.com/a/14001282) for details. When in doubt, try it both ways.
+
+## Demo Projects
+The `DemoService` project uses .NET Framework 4.8. Building the demo will copy the batch files to the build target. 
+
+Similarly, the `DemoModernService` project uses .NET 8.0, and a build will copy the batch files to the build target. 
+
+For either version, CD to the bin directory and run `createService` to install and start the service. It will launch `calc.exe` as soon as it starts. After that, run `deleteService` to stop and uninstall the service.
+
