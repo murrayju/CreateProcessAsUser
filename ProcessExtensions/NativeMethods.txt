@@ -1,0 +1,9 @@
+﻿WTSEnumerateSessions
+WTSFreeMemory
+WTSGetActiveConsoleSessionId
+WTSQueryUserToken
+DuplicateTokenEx
+CreateEnvironmentBlock
+DestroyEnvironmentBlock
+CreateProcessAsUser
+SHOW_WINDOW_CMD
