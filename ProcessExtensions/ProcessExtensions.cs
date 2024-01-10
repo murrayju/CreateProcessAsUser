@@ -4,6 +4,50 @@ using System.Runtime.InteropServices;
 
 namespace murrayju.ProcessExtensions
 {
+    public enum SW
+    {
+        HIDE = 0,
+        SHOWNORMAL = 1,
+        NORMAL = 1,
+
+        SHOWMINIMIZED = 2,
+
+        SHOWMAXIMIZED = 3,
+        MAXIMIZE = 3,
+
+        SHOWNOACTIVATE = 4,
+        SHOW = 5,
+        MINIMIZE = 6,
+        SHOWMINNOACTIVE = 7,
+        SHOWNA = 8,
+        RESTORE = 9,
+        SHOWDEFAULT = 10,
+        MAX = 10
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct STARTUPINFO
+    {
+        public int cb;
+        public String lpReserved;
+        public String lpDesktop;
+        public String lpTitle;
+        public uint dwX;
+        public uint dwY;
+        public uint dwXSize;
+        public uint dwYSize;
+        public uint dwXCountChars;
+        public uint dwYCountChars;
+        public uint dwFillAttribute;
+        public uint dwFlags;
+        public short wShowWindow;
+        public short cbReserved2;
+        public IntPtr lpReserved2;
+        public IntPtr hStdInput;
+        public IntPtr hStdOutput;
+        public IntPtr hStdError;
+    }
+
     public class ProcessCreationException : Exception
     {
         public ProcessCreationException(string msg) : base(msg) { }
@@ -21,7 +65,7 @@ namespace murrayju.ProcessExtensions
         private const uint INVALID_SESSION_ID = 0xFFFFFFFF;
         private static readonly IntPtr WTS_CURRENT_SERVER_HANDLE = IntPtr.Zero;
         private const int STARTF_USESHOWWINDOW = 0x00000001;
-        
+
         #endregion
 
         #region DllImports
@@ -80,24 +124,6 @@ namespace murrayju.ProcessExtensions
 
         #region Win32 Structs
 
-        private enum SW
-        {
-            SW_HIDE = 0,
-            SW_SHOWNORMAL = 1,
-            SW_NORMAL = 1,
-            SW_SHOWMINIMIZED = 2,
-            SW_SHOWMAXIMIZED = 3,
-            SW_MAXIMIZE = 3,
-            SW_SHOWNOACTIVATE = 4,
-            SW_SHOW = 5,
-            SW_MINIMIZE = 6,
-            SW_SHOWMINNOACTIVE = 7,
-            SW_SHOWNA = 8,
-            SW_RESTORE = 9,
-            SW_SHOWDEFAULT = 10,
-            SW_MAX = 10
-        }
-
         private enum WTS_CONNECTSTATE_CLASS
         {
             WTSActive,
@@ -127,29 +153,6 @@ namespace murrayju.ProcessExtensions
             SecurityIdentification = 1,
             SecurityImpersonation = 2,
             SecurityDelegation = 3,
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct STARTUPINFO
-        {
-            public int cb;
-            public String lpReserved;
-            public String lpDesktop;
-            public String lpTitle;
-            public uint dwX;
-            public uint dwY;
-            public uint dwXSize;
-            public uint dwYSize;
-            public uint dwXCountChars;
-            public uint dwYCountChars;
-            public uint dwFillAttribute;
-            public uint dwFlags;
-            public short wShowWindow;
-            public short cbReserved2;
-            public IntPtr lpReserved2;
-            public IntPtr hStdInput;
-            public IntPtr hStdOutput;
-            public IntPtr hStdError;
         }
 
         private enum TOKEN_TYPE
@@ -219,15 +222,12 @@ namespace murrayju.ProcessExtensions
             return bResult;
         }
 
-        public static bool StartProcessAsCurrentUser(string appPath, string cmdLine = null, string workDir = null, bool visible = true)
+        public static uint StartProcessAsCurrentUserEx(string appPath, string cmdLine, string workDir, uint creationFlags, STARTUPINFO? startupInfo = null)
         {
             var hUserToken = IntPtr.Zero;
-            var startInfo = new STARTUPINFO();
             var procInfo = new PROCESS_INFORMATION();
             var pEnv = IntPtr.Zero;
             int iResultOfCreateProcessAsUser;
-
-            startInfo.cb = Marshal.SizeOf(typeof(STARTUPINFO));
 
             try
             {
@@ -236,10 +236,13 @@ namespace murrayju.ProcessExtensions
                     throw new ProcessCreationException("StartProcessAsCurrentUser: GetSessionUserToken failed.");
                 }
 
-                uint dwCreationFlags = CREATE_UNICODE_ENVIRONMENT | (uint)(visible ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
-                startInfo.dwFlags = STARTF_USESHOWWINDOW;
-                startInfo.wShowWindow = (short)(visible ? SW.SW_SHOW : SW.SW_HIDE);
-                startInfo.lpDesktop = "winsta0\\default";
+                STARTUPINFO si = startupInfo ?? new STARTUPINFO()
+                {
+                    wShowWindow = (short)SW.SHOW,
+                    dwFlags = STARTF_USESHOWWINDOW
+                };
+                si.cb = Marshal.SizeOf(typeof(STARTUPINFO));
+                si.lpDesktop = "winsta0\\default";
 
                 if (!CreateEnvironmentBlock(ref pEnv, hUserToken, false))
                 {
@@ -257,10 +260,10 @@ namespace murrayju.ProcessExtensions
                     IntPtr.Zero,
                     IntPtr.Zero,
                     false,
-                    dwCreationFlags,
+                    CREATE_UNICODE_ENVIRONMENT | creationFlags,
                     pEnv,
                     workDir, // Working directory
-                    ref startInfo,
+                    ref si,
                     out procInfo))
                 {
                     iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
@@ -268,6 +271,8 @@ namespace murrayju.ProcessExtensions
                 }
 
                 iResultOfCreateProcessAsUser = Marshal.GetLastWin32Error();
+
+                return procInfo.dwProcessId;
             }
             finally
             {
@@ -279,9 +284,16 @@ namespace murrayju.ProcessExtensions
                 CloseHandle(procInfo.hThread);
                 CloseHandle(procInfo.hProcess);
             }
-
-            return true;
         }
 
+        public static uint StartProcessAsCurrentUser(string appPath, string cmdLine = null, string workDir = null, bool visible = true)
+        {
+            return StartProcessAsCurrentUserEx(
+                appPath,
+                cmdLine,
+                workDir,
+               (uint)(visible ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW)
+            );
+        }
     }
 }
