@@ -222,7 +222,7 @@ namespace murrayju.ProcessExtensions
             return bResult;
         }
 
-        public static uint StartProcessAsCurrentUserEx(string appPath, string cmdLine, string workDir, uint creationFlags, STARTUPINFO? startupInfo = null)
+        public static uint StartProcessAsCurrentUserEx(string appPath, string cmdLine = null, string workDir = null, uint creationFlags = 0, STARTUPINFO? startupInfo = null)
         {
             var hUserToken = IntPtr.Zero;
             var procInfo = new PROCESS_INFORMATION();
