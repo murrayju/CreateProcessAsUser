@@ -45,8 +45,8 @@ namespace murrayju.ProcessExtensions
             IntPtr ExistingTokenHandle,
             uint dwDesiredAccess,
             IntPtr lpThreadAttributes,
-            int TokenType,
             int ImpersonationLevel,
+            int TokenType,
             ref IntPtr DuplicateTokenHandle);
 
         [DllImport("userenv.dll", SetLastError = true)]
